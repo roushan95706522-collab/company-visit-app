@@ -78,6 +78,39 @@ def init_db():
             ('2026-10-16', 'TEAM-4', 'Pawan Steel Works', 'Industrial Estate, Hisar', 'Referral', 15, 29.1450, 75.7250, 1),
             ('2026-10-17', 'TEAM-4', 'Agroha Agro Foods', 'Hisar-Barwala Road, Hisar', 'Outreach', 10, 29.1750, 75.7500, 1)''')
 
+  # Automatic Dummy Student Assignments for Date 2026-10-12 so data appears instantly
+  c.execute('SELECT COUNT(*) FROM student_assignments')
+  if c.fetchone()[0] == 0:
+    team1_visits = json.dumps([
+        {'id': 1, 'name': 'Tokai Imperial Rubber India Pvt. Ltd.', 'address': '45 Milestone, VPO Prithla, Palwal - 121102', 'source': 'Outreach', 'durationMins': 10, 'latitude': 28.2231, 'longitude': 77.3188, 'confirmed': True, 'isCompleted': False},
+        {'id': 2, 'name': 'Maruti Suzuki (Manesar plant)', 'address': 'Plot No. 1, Phase 3A, IMT Manesar, Gurgaon 122051', 'source': 'Referral', 'durationMins': 15, 'latitude': 28.3517, 'longitude': 76.9428, 'confirmed': True, 'isCompleted': False}
+    ])
+    team2_visits = json.dumps([
+        {'id': 8, 'name': 'Nagarro Gurgaon', 'address': 'Plot No. 13, Electronic City, Sector 18, Gurugram', 'source': 'Outreach', 'durationMins': 10, 'latitude': 28.4595, 'longitude': 77.0266, 'confirmed': True, 'isCompleted': False},
+        {'id': 9, 'name': 'TCS Gurgaon', 'address': 'IT Park, Sector 48, Gurgaon', 'source': 'Referral', 'durationMins': 15, 'latitude': 28.4231, 'longitude': 77.0450, 'confirmed': True, 'isCompleted': False}
+    ])
+    team3_visits = json.dumps([
+        {'id': 14, 'name': 'Samsung Electronics Noida', 'address': 'B-1, Sector 81, Phase II, Noida', 'source': 'Outreach', 'durationMins': 10, 'latitude': 28.5355, 'longitude': 77.3910, 'confirmed': True, 'isCompleted': False},
+        {'id': 15, 'name': 'Adobe Systems Noida', 'address': 'Plot 46, Sector 132, Noida', 'source': 'Referral', 'durationMins': 15, 'latitude': 28.5021, 'longitude': 77.3750, 'confirmed': True, 'isCompleted': False}
+    ])
+    team4_visits = json.dumps([
+        {'id': 20, 'name': 'Jindal Stainless Ltd. Hisar', 'address': 'OP Jindal Marg, Hisar, Haryana 125005', 'source': 'Outreach', 'durationMins': 10, 'latitude': 29.1492, 'longitude': 75.7217, 'confirmed': True, 'isCompleted': False},
+        {'id': 21, 'name': 'Auto Pins India Hisar', 'address': 'Industrial Area, Hisar', 'source': 'Referral', 'durationMins': 15, 'latitude': 29.1550, 'longitude': 75.7100, 'confirmed': True, 'isCompleted': False}
+    ])
+
+    # TEAM-1 Students
+    for s_id in ['STU-1001', 'STU-1002', 'STU-1003', 'STU-1004']:
+      c.execute('INSERT INTO student_assignments (student_id, visit_date, visits_json) VALUES (?, ?, ?)', (s_id, '2026-10-12', team1_visits))
+    # TEAM-2 Students
+    for s_id in ['STU-1005', 'STU-1006', 'STU-1007', 'STU-1008']:
+      c.execute('INSERT INTO student_assignments (student_id, visit_date, visits_json) VALUES (?, ?, ?)', (s_id, '2026-10-12', team2_visits))
+    # TEAM-3 Students
+    for s_id in ['STU-1009', 'STU-1010', 'STU-1011', 'STU-1012']:
+      c.execute('INSERT INTO student_assignments (student_id, visit_date, visits_json) VALUES (?, ?, ?)', (s_id, '2026-10-12', team3_visits))
+    # TEAM-4 Students
+    for s_id in ['STU-1013', 'STU-1014', 'STU-1015', 'STU-1016']:
+      c.execute('INSERT INTO student_assignments (student_id, visit_date, visits_json) VALUES (?, ?, ?)', (s_id, '2026-10-12', team4_visits))
+
   conn.commit()
   conn.close()
 
@@ -189,7 +222,6 @@ def update_company_selection():
   c = conn.cursor()
   c.execute('UPDATE companies SET confirmed = ? WHERE id = ?', (confirmed, comp_id))
   
-  # Agar admin ne uncheck kiya hai, toh sabhi student assignments se us company ko hata do
   if confirmed == 0:
     c.execute('SELECT id, student_id, visits_json FROM student_assignments')
     assignments = c.fetchall()
