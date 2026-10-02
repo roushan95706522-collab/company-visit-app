@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Visit Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        #studentMap { height: 320px; width: 100%; border-radius: 12px; z-index: 1; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans">
+
+    <!-- VISIT FORM MODAL -->
+    <div id="visitReportModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <button type="button" onclick="closeReportModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <h3 class="font-bold text-base text-emerald-400 mb-1 flex items-center gap-2">
+                <i class="fa-solid fa-clipboard-check"></i> Submit Visit Feedback
+            </h3>
+            <p class="text-xs text-slate-400 mb-3">Fill up the visit details below</p>
+
+            <form id="reportForm" onsubmit="submitVisitReport(event)" class="space-y-3">
+                <input type="hidden" id="modalVisitId">
+                <input type="hidden" id="modalCompanyName">
+
+                <!-- Auto-filled Company Name -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Company Name</label>
+                    <input type="text" id="modalCompanyNameInput" readonly class="w-full bg-slate-950 text-emerald-400 font-bold border border-slate-800 rounded-xl px-3 py-2 text-xs focus:outline-none"/>
+                </div>
+
+                <!-- Auto-filled Student Name & Roll / ID -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Student Name</label>
+                        <input type="text" id="modalStudentName" readonly class="w-full bg-slate-950 text-slate-200 font-medium border border-slate-800 rounded-xl px-3 py-2 text-xs focus:outline-none"/>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Student Roll / ID</label>
+                        <input type="text" id="modalStudentId" readonly class="w-full bg-slate-950 text-slate-200 font-medium border border-slate-800 rounded-xl px-3 py-2 text-xs focus:outline-none"/>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-200 mb-1">HR / Person Met</label>
+                        <input type="text" id="personMet" required placeholder="Name" class="w-full bg-white text-slate-900 font-medium border border-slate-300 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-emerald-500 shadow-sm"/>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-200 mb-1">HR Contact No.</label>
+                        <input type="tel" id="contactNo" required placeholder="Mobile" class="w-full bg-white text-slate-900 font-medium border border-slate-300 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-emerald-500 shadow-sm"/>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-200 mb-1">HR Email (Optional)</label>
+                    <input type="email" id="hrEmail" placeholder="hr@company.com" class="w-full bg-white text-slate-900 font-medium border border-slate-300 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-emerald-500 shadow-sm"/>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-200 mb-1">Meeting Status / Outcome</label>
+                    <select id="visitStatus" class="w-full bg-white text-slate-900 font-bold border border-slate-300 rounded-xl px-3 py-2 text-xs focus:outline-none">
+                        <option value="Interested / Positive Pitch">Interested / Positive Pitch</option>
+                        <option value="Follow-up Required">Follow-up Required</option>
+                        <option value="Not Interested">Not Interested</option>
+                        <option value="Office Closed / Shifted">Office Closed / Shifted</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-200 mb-1">Overall Conversation Summary</label>
+                    <textarea id="overallConversation" rows="2" placeholder="Summary of the talk..." class="w-full bg-white text-slate-900 font-medium border border-slate-300 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-emerald-500 shadow-sm custom-scrollbar"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-200 mb-1">Feedback & Next Steps</label>
+                    <textarea id="feedbackNotes" rows="2" required placeholder="Enter key points..." class="w-full bg-white text-slate-900 font-medium border border-slate-300 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-emerald-500 shadow-sm custom-scrollbar"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-200 mb-1"><i class="fa-solid fa-camera"></i> Capture Picture / Visiting Card (Optional)</label>
+                    <input type="file" id="visitImage" accept="image/*" capture="environment" class="w-full bg-white text-slate-900 font-medium border border-slate-300 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-emerald-500 shadow-sm file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:bg-slate-200 file:text-slate-700 hover:file:bg-slate-300 cursor-pointer"/>
+                </div>
+
+                <button type="submit" id="submitBtn" class="w-full bg-emerald-600 hover:bg-emerald-500 font-bold py-2.5 rounded-xl text-xs text-white transition mt-2 flex items-center justify-center gap-2 shadow-lg">
+                    Submit & Complete Visit
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-slate-900 border-b border-slate-800 p-4 px-6 flex flex-wrap justify-between items-center gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-emerald-500/20 border border-emerald-500/40 rounded-xl flex items-center justify-center text-emerald-400">
+                <i class="fa-solid fa-user-graduate text-lg"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-sm text-white">{{ student_name }}</h1>
+                <p class="text-[11px] text-slate-400">Student ID: {{ student_id }} | Team: <span class="text-emerald-400 font-semibold">{{ team_id }}</span></p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <div class="flex items-center gap-1 bg-slate-800 border border-slate-700 px-2.5 py-1 rounded-xl">
+                <input type="date" id="studentDateSelector" class="bg-transparent text-xs text-amber-400 font-bold focus:outline-none" onchange="fetchVisits()"/>
+            </div>
+
+            <div id="tripTimerBadge" class="hidden text-xs bg-amber-500/10 border border-amber-500/40 px-3 py-1.5 rounded-xl flex items-center gap-2 text-amber-400 font-mono font-bold">
+                <i class="fa-solid fa-stopwatch animate-spin"></i>
+                <span id="tripTimerText">00:00:00</span>
+            </div>
+
+            <div id="gpsStatus" class="text-xs bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-xl flex items-center gap-2 text-slate-400">
+                <i class="fa-solid fa-location-crosshairs animate-spin text-emerald-400"></i>
+                <span>Locating GPS...</span>
+            </div>
+
+            <a href="/logout" class="px-3 py-1.5 bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs rounded-xl hover:bg-rose-500 hover:text-white transition">
+                Logout
+            </a>
+        </div>
+    </header>
+
+    <main class="flex-1 p-4 max-w-3xl w-full mx-auto space-y-4">
+        
+        <!-- Map Container -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl" id="mapContainerWrapper">
+            <div class="flex justify-between items-center mb-4 flex-wrap gap-3">
+                <h2 class="font-bold text-sm uppercase text-slate-300 tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-route text-amber-400"></i> Your Assigned Route Map
+                </h2>
+                <a id="allCompaniesGmapsBtn" href="#" target="_blank" class="hidden bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2 rounded-xl transition items-center gap-2 shadow-lg">
+                    <i class="fa-solid fa-map-location-dot"></i> See All Companies Route on Map
+                </a>
+            </div>
+            <div id="studentMap" class="border border-slate-800"></div>
+        </div>
+
+        <!-- Assigned Company Visits List -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="font-bold text-sm uppercase text-slate-300 tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-map-pin text-emerald-400"></i> Assigned Company Visits
+                </h2>
+                <button onclick="fetchVisits()" class="text-xs text-emerald-400 hover:underline">Refresh List</button>
+            </div>
+
+            <div id="visitContainer" class="space-y-4">
+                <p class="text-xs text-slate-500 italic">Loading assigned visits...</p>
+            </div>
+        </div>
+
+        <!-- Chat Box -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col h-64">
+            <h2 class="font-bold text-xs uppercase text-slate-400 tracking-wider mb-2 flex items-center gap-2">
+                <i class="fa-solid fa-comments text-indigo-400"></i> Admin Live Support Chat
+            </h2>
+            <div id="chatBox" class="flex-1 bg-slate-950 border border-slate-800 rounded-xl p-3 overflow-y-auto text-xs space-y-2 mb-3 custom-scrollbar">
+                <!-- Chat will load here -->
+            </div>
+            <form id="chatForm" class="flex gap-2">
+                <input type="text" id="chatInput" placeholder="Type message..." class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500" autocomplete="off" required/>
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 text-xs font-bold rounded-xl text-white transition">Send</button>
+            </form>
+        </div>
+
+    </main>
+
+    <script>
+        const socket = io();
+        const studentId = "{{ student_id }}";
+        const studentName = "{{ student_name }}";
+        const teamId = "{{ team_id }}";
+
+        let timerInterval = null;
+        let timerSeconds = 0;
+        let studentMap, routeMarkers = [];
+
+        document.getElementById('studentDateSelector').value = '2026-10-12';
+
+        function initStudentMap() {
+            studentMap = L.map('studentMap').setView([28.4595, 77.0266], 10);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© OpenStreetMap' }).addTo(studentMap);
+            setTimeout(() => { if(studentMap) studentMap.invalidateSize(); }, 500);
+        }
+
+        function startGPSWatcher() {
+            const gpsStatus = document.getElementById('gpsStatus');
+            if ("geolocation" in navigator) {
+                navigator.geolocation.watchPosition(
+                    (pos) => {
+                        socket.emit('update_student_location', {
+                            student_id: studentId, student_name: studentName, team_id: teamId,
+                            latitude: pos.coords.latitude, longitude: pos.coords.longitude
+                        });
+                        gpsStatus.className = "text-xs bg-emerald-500/10 border border-emerald-500/40 px-3 py-1.5 rounded-xl flex items-center gap-2 text-emerald-400";
+                        gpsStatus.innerHTML = `<i class="fa-solid fa-location-dot"></i> GPS Active`;
+                    },
+                    (err) => {
+                        gpsStatus.className = "text-xs bg-rose-500/10 border border-rose-500/40 px-3 py-1.5 rounded-xl flex items-center gap-2 text-rose-400";
+                        gpsStatus.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> GPS Error`;
+                    },
+                    { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
+                );
+            }
+        }
+
+        function updateTimerUI(isStarted) {
+            const badge = document.getElementById('tripTimerBadge');
+            const text = document.getElementById('tripTimerText');
+            if (isStarted) {
+                badge.classList.remove('hidden'); badge.classList.add('flex');
+                if (!timerInterval) {
+                    timerInterval = setInterval(() => {
+                        timerSeconds++;
+                        const hrs = String(Math.floor(timerSeconds / 3600)).padStart(2, '0');
+                        const mins = String(Math.floor((timerSeconds % 3600) / 60)).padStart(2, '0');
+                        const secs = String(timerSeconds % 60).padStart(2, '0');
+                        text.innerText = `${hrs}:${mins}:${secs}`;
+                    }, 1000);
+                }
+            } else {
+                if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+                badge.classList.add('hidden'); badge.classList.remove('flex');
+                timerSeconds = 0;
+            }
+        }
+
+        async function fetchVisits() {
+            let selectedDate = document.getElementById('studentDateSelector').value;
+            if (selectedDate.includes('/')) {
+                const parts = selectedDate.split('/');
+                selectedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+            }
+
+            try {
+                const res = await fetch(`/api/student-visits?date=${selectedDate}`);
+                const data = await res.json();
+                renderVisits(data.visits || []);
+                updateTimerUI(data.trip_started);
+            } catch (err) { console.error("Error fetching student visits:", err); }
+        }
+
+        function renderVisits(visits) {
+            const container = document.getElementById('visitContainer');
+            const allBtn = document.getElementById('allCompaniesGmapsBtn');
+            const mapWrapper = document.getElementById('mapContainerWrapper');
+
+            routeMarkers.forEach(m => studentMap.removeLayer(m));
+            routeMarkers = [];
+
+            if(visits.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-500 italic p-2">No visits assigned for this date.</p>`;
+                mapWrapper.classList.add('hidden');
+                allBtn.classList.add('hidden');
+                return;
+            }
+
+            mapWrapper.classList.remove('hidden');
+            const bounds = [];
+            const coordsList = [];
+
+            container.innerHTML = visits.map((v) => {
+                const isDone = v.isCompleted || v.is_completed;
+                const compName = v.name || v.company_name;
+                const compId = v.id || v.company_id;
+                const lat = v.latitude;
+                const lng = v.longitude;
+                let locationHtml = '';
+
+                if (lat && lng && lat !== "null" && lng !== "null" && lat !== undefined) {
+                    let singleGmapsLink = `https://www.google.com/maps/search/?api=1&query=${parseFloat(lat)},${parseFloat(lng)}`;
+                    coordsList.push(`${parseFloat(lat)},${parseFloat(lng)}`);
+
+                    locationHtml = `
+                        <a href="${singleGmapsLink}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded-lg text-xs font-bold transition w-fit">
+                            <i class="fa-solid fa-location-dot"></i> See Location on Google Maps
+                        </a>`;
+
+                    const marker = L.marker([lat, lng]).bindPopup(`
+                        <div class="text-xs text-slate-800 font-sans p-1">
+                            <b class="text-emerald-700 text-sm">${compName}</b><br/>
+                            <p class="mt-1 text-slate-600">${v.address}</p>
+                            <a href="${singleGmapsLink}" target="_blank" class="mt-2 block w-full text-center bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 rounded-lg transition">
+                                <i class="fa-solid fa-location-arrow"></i> Open Google Maps
+                            </a>
+                        </div>
+                    `).addTo(studentMap);
+                    routeMarkers.push(marker);
+                    bounds.push([lat, lng]);
+                } else {
+                    locationHtml = `
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 text-slate-400 border border-slate-700 rounded-lg text-xs font-bold w-fit">
+                            <i class="fa-solid fa-circle-exclamation text-amber-500"></i> Location Data Missing in Database
+                        </span>`;
+                }
+
+                return `
+                <div class="p-4 bg-slate-950 border ${isDone ? 'border-emerald-500/50 shadow-emerald-900/20' : 'border-slate-800'} rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div class="flex-1 w-full">
+                        <h3 class="font-bold text-sm text-white">${compName}</h3>
+                        <p class="text-xs text-slate-400 mt-0.5 mb-3">${v.address}</p>
+                        ${locationHtml}
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full md:w-auto mt-2 md:mt-0">
+                        ${isDone ? 
+                            `<span class="text-xs text-emerald-400 font-bold flex items-center gap-1 px-2 py-1 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+                                <i class="fa-solid fa-circle-check"></i> Visited
+                             </span>
+                             <button onclick="resetVisitData(${compId}, '${compName.replace(/'/g, "\\'")}')" title="Delete & Re-submit" class="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 border border-rose-500/30 text-xs font-bold rounded-lg transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-rotate-left"></i> Reset
+                             </button>` :
+                            `<button onclick="openReportModal(${compId}, '${compName.replace(/'/g, "\\'")}')" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition shadow-lg w-full sm:w-auto flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-pen-to-square"></i> Mark Done & Feedback
+                            </button>`
+                        }
+                    </div>
+                </div>
+            `}).join('');
+
+            if(coordsList.length > 0) {
+                allBtn.href = `https://www.google.com/maps/dir//${coordsList.join('/')}`;
+                allBtn.classList.remove('hidden');
+                allBtn.classList.add('inline-flex');
+            } else {
+                allBtn.classList.add('hidden');
+            }
+
+            if(bounds.length > 0) {
+                studentMap.fitBounds(bounds, { padding: [30, 30] });
+                setTimeout(() => studentMap.invalidateSize(), 500);
+            }
+        }
+
+        async function resetVisitData(visitId, compName) {
+            if(!confirm(`Kya aap "${compName}" ka report delete karke dobara form bharna chahte hain?`)) return;
+
+            let selectedDate = document.getElementById('studentDateSelector').value;
+            if (selectedDate.includes('/')) {
+                const parts = selectedDate.split('/');
+                selectedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+            }
+
+            try {
+                const res = await fetch('/api/delete-visit-report', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ visit_id: visitId, company_name: compName, visit_date: selectedDate, student_id: studentId })
+                });
+                const data = await res.json();
+                if(res.ok) { alert("Visit Data Deleted! Ab aap dobara report bhaar sakte hain."); fetchVisits(); }
+                else { alert("Error: " + data.error); }
+            } catch(e) { alert("Reset failed: " + e.message); }
+        }
+
+        function openReportModal(visitId, compName) {
+            document.getElementById('modalVisitId').value = visitId;
+            document.getElementById('modalCompanyName').value = compName;
+            document.getElementById('modalCompanyNameInput').value = compName; // Auto Company Name
+            document.getElementById('modalStudentName').value = studentName;    // Auto Student Name
+            document.getElementById('modalStudentId').value = studentId;        // Auto Student ID / Roll
+            
+            const modal = document.getElementById('visitReportModal');
+            modal.classList.remove('hidden'); modal.classList.add('flex');
+        }
+
+        function closeReportModal() {
+            const modal = document.getElementById('visitReportModal');
+            modal.classList.add('hidden'); modal.classList.remove('flex');
+        }
+
+        async function submitVisitReport(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true; btn.innerText = "Submitting...";
+
+            const visitId = document.getElementById('modalVisitId').value;
+            const compName = document.getElementById('modalCompanyName').value;
+            
+            let selectedDate = document.getElementById('studentDateSelector').value || new Date().toISOString().split('T')[0];
+            if (selectedDate.includes('/')) {
+                const parts = selectedDate.split('/');
+                selectedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+            }
+
+            const formData = new FormData();
+            formData.append('visit_id', visitId);
+            formData.append('company_name', compName);
+            formData.append('visit_date', selectedDate);
+            formData.append('person_met', document.getElementById('personMet').value.trim());
+            formData.append('contact_no', document.getElementById('contactNo').value.trim());
+            formData.append('hr_email', document.getElementById('hrEmail').value.trim());
+            formData.append('visit_status', document.getElementById('visitStatus').value);
+            formData.append('overall_conversation', document.getElementById('overallConversation').value.trim());
+            formData.append('feedback_notes', document.getElementById('feedbackNotes').value.trim());
+            
+            const imageFile = document.getElementById('visitImage').files[0];
+            if(imageFile) formData.append('visit_image', imageFile);
+
+            try {
+                const res = await fetch('/api/submit-visit-report', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (res.ok) {
+                    alert("Visit Report Submitted Successfully!");
+                    closeReportModal(); document.getElementById('reportForm').reset(); fetchVisits();
+                } else { alert("Submission Error: " + (data.error || "Failed to save response.")); }
+            } catch (err) { alert("Network Error: " + err.message); }
+            finally { btn.disabled = false; btn.innerText = "Submit & Complete Visit"; }
+        }
+
+        // LOAD CHAT HISTORY
+        async function fetchChatHistory() {
+            try {
+                const res = await fetch(`/api/get-chat-history/${teamId}`);
+                const data = await res.json();
+                const box = document.getElementById('chatBox');
+                box.innerHTML = ''; 
+                
+                if (data.messages && data.messages.length > 0) {
+                    data.messages.forEach(msg => {
+                        const p = document.createElement('p');
+                        p.className = "text-slate-200 mb-1"; 
+                        p.innerHTML = `<b class="${msg.role === 'admin' ? 'text-indigo-400' : 'text-emerald-400'}">${msg.sender}:</b> ${msg.message}`;
+                        box.appendChild(p);
+                    });
+                    box.scrollTop = box.scrollHeight;
+                } else {
+                    box.innerHTML = `<p class="text-slate-500 italic text-center" id="chatStatusText">No previous messages. Start chatting!</p>`;
+                }
+            } catch (e) { console.error("Error loading chat history:", e); }
+        }
+
+        socket.on('connect', () => {
+            socket.emit('join_team_room', { username: studentName, team_id: teamId });
+        });
+
+        document.getElementById('chatForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const input = document.getElementById('chatInput');
+            if(input.value.trim()) {
+                socket.emit('send_message', { sender: studentName, message: input.value.trim(), role: 'student', team_id: teamId });
+                input.value = '';
+            }
+        });
+
+        socket.on('chat_message', (data) => {
+            const statusText = document.getElementById('chatStatusText');
+            if(statusText) statusText.remove();
+            const box = document.getElementById('chatBox');
+            const p = document.createElement('p');
+            p.className = "text-slate-200 mb-1"; 
+            p.innerHTML = `<b class="${data.role === 'admin' ? 'text-indigo-400' : 'text-emerald-400'}">${data.sender}:</b> ${data.message}`;
+            box.appendChild(p);
+            box.scrollTop = box.scrollHeight;
+        });
+
+        socket.on('trip_status_changed', (data) => { if (data.team_id === teamId) updateTimerUI(data.trip_started); });
+        socket.on('student_route_updated', (data) => { if (data.student_id === studentId) fetchVisits(); });
+
+        window.onload = () => { 
+            initStudentMap(); 
+            startGPSWatcher(); 
+            fetchVisits(); 
+            fetchChatHistory(); 
+        };
+    </script>
+</body>
+</html>
