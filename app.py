@@ -46,70 +46,75 @@ def init_db():
   c.execute('''CREATE TABLE IF NOT EXISTS chat_messages (
             id INTEGER PRIMARY KEY AUTOINCREMENT, team_id TEXT, sender TEXT, role TEXT, message TEXT, timestamp TEXT)''')
 
+  # Insert Companies for Oct 12, 13, 14, 15 if not already present
   c.execute('SELECT COUNT(*) FROM companies')
   if c.fetchone()[0] == 0:
     c.execute('''INSERT INTO companies (visit_date, team_id, name, address, source, duration_mins, latitude, longitude, confirmed) VALUES 
-            ('2026-10-12', 'TEAM-1', 'Tokai Imperial Rubber India Pvt. Ltd.', '45 Milestone, VPO Prithla, Palwal - 121102', 'Outreach', 10, 28.2231, 77.3188, 1),
-            ('2026-10-12', 'TEAM-1', 'Maruti Suzuki (Manesar plant)', 'Plot No. 1, Phase 3A, IMT Manesar, Gurgaon 122051', 'Referral', 15, 28.3517, 76.9428, 1),
-            ('2026-10-13', 'TEAM-1', 'Hero MotoCorp Ltd.', '34th Milestone, Delhi-Jaipur Highway, Gurgaon', 'Outreach', 15, 28.3812, 77.0125, 1),
-            ('2026-10-14', 'TEAM-1', 'Honda Motorcycle & Scooter', 'Plot No. 1, Sector 3, IMT Manesar', 'Outreach', 12, 28.3620, 76.9350, 1),
-            ('2026-10-15', 'TEAM-1', 'Escorts Kubota Ltd.', 'Sector 13, Faridabad, Haryana', 'Referral', 10, 28.4089, 77.3178, 1),
-            ('2026-10-16', 'TEAM-1', 'Lohia Machines Ltd.', 'Mathura Road, Palwal', 'Outreach', 10, 28.1487, 77.3320, 1),
-            ('2026-10-17', 'TEAM-1', 'Jindal Steels', 'Industrial Area, Ballabhgarh', 'Outreach', 15, 28.3375, 77.3210, 1),
+            -- TEAM-1 (Palwal/Manesar/Gurgaon)
+            ('2026-10-12', 'TEAM-1', 'Tokai Imperial Rubber India Pvt. Ltd.', '45 Milestone, VPO Prithla, Palwal', 'Outreach', 10, 28.2231, 77.3188, 1),
+            ('2026-10-12', 'TEAM-1', 'Maruti Suzuki Manesar Plant', 'Plot No. 1, IMT Manesar, Gurgaon', 'Referral', 15, 28.3517, 76.9428, 1),
+            ('2026-10-13', 'TEAM-1', 'Hero MotoCorp Ltd.', '34th Milestone, Delhi-Jaipur Hwy, Gurgaon', 'Outreach', 15, 28.3812, 77.0125, 1),
+            ('2026-10-13', 'TEAM-1', 'Honda Motorcycle & Scooter', 'Plot No. 1, Sector 3, IMT Manesar', 'Referral', 12, 28.3620, 76.9350, 1),
+            ('2026-10-14', 'TEAM-1', 'Escorts Kubota Ltd.', 'Sector 13, Faridabad, Haryana', 'Outreach', 10, 28.4089, 77.3178, 1),
+            ('2026-10-14', 'TEAM-1', 'Lohia Machines Ltd.', 'Mathura Road, Palwal', 'Referral', 10, 28.1487, 77.3320, 1),
+            ('2026-10-15', 'TEAM-1', 'Jindal Steels', 'Industrial Area, Ballabhgarh', 'Outreach', 15, 28.3375, 77.3210, 1),
+            ('2026-10-15', 'TEAM-1', 'Larsen & Toubro Ltd.', 'Mathura Road, Faridabad', 'Referral', 15, 28.4120, 77.3110, 1),
 
-            ('2026-10-12', 'TEAM-2', 'Nagarro Gurgaon', 'Plot No. 13, Electronic City, Sector 18, Gurugram', 'Outreach', 10, 28.4595, 77.0266, 1),
-            ('2026-10-13', 'TEAM-2', 'TCS Gurgaon', 'IT Park, Sector 48, Gurgaon', 'Referral', 15, 28.4231, 77.0450, 1),
-            ('2026-10-14', 'TEAM-2', 'Wipro Technologies', 'Udyog Vihar Phase V, Gurgaon', 'Outreach', 12, 28.4983, 77.0812, 1),
-            ('2026-10-15', 'TEAM-2', 'Infosys Ltd.', 'Technology Park, Chandigarh Road, Gurgaon', 'Outreach', 10, 28.4812, 77.0721, 1),
-            ('2026-10-16', 'TEAM-2', 'HCL Technologies', 'Sector 60, Golf Course Ext Rd, Gurgaon', 'Referral', 15, 28.4110, 77.0650, 1),
-            ('2026-10-17', 'TEAM-2', 'Tech Mahindra', 'Sector 32, Institutional Area, Gurgaon', 'Outreach', 10, 28.4412, 77.0512, 1),
+            -- TEAM-2 (Gurgaon Tech)
+            ('2026-10-12', 'TEAM-2', 'Nagarro Gurgaon', 'Plot No. 13, Electronic City, Sec 18, Gurgaon', 'Outreach', 10, 28.4595, 77.0266, 1),
+            ('2026-10-12', 'TEAM-2', 'TCS Gurgaon', 'IT Park, Sector 48, Gurgaon', 'Referral', 15, 28.4231, 77.0450, 1),
+            ('2026-10-13', 'TEAM-2', 'Wipro Technologies', 'Udyog Vihar Phase V, Gurgaon', 'Outreach', 12, 28.4983, 77.0812, 1),
+            ('2026-10-13', 'TEAM-2', 'Infosys Ltd.', 'Technology Park, Chandigarh Road, Gurgaon', 'Referral', 10, 28.4812, 77.0721, 1),
+            ('2026-10-14', 'TEAM-2', 'HCL Technologies', 'Sector 60, Golf Course Ext Rd, Gurgaon', 'Outreach', 15, 28.4110, 77.0650, 1),
+            ('2026-10-14', 'TEAM-2', 'Tech Mahindra', 'Sector 32, Institutional Area, Gurgaon', 'Referral', 10, 28.4412, 77.0512, 1),
+            ('2026-10-15', 'TEAM-2', 'Genpact India', 'Sector 53, Gurgaon', 'Outreach', 15, 28.4480, 77.0850, 1),
+            ('2026-10-15', 'TEAM-2', 'American Express', 'Cyber City, Phase 3, Gurgaon', 'Referral', 12, 28.4950, 77.0890, 1),
 
+            -- TEAM-3 (Noida Hub)
             ('2026-10-12', 'TEAM-3', 'Samsung Electronics Noida', 'B-1, Sector 81, Phase II, Noida', 'Outreach', 10, 28.5355, 77.3910, 1),
-            ('2026-10-13', 'TEAM-3', 'Adobe Systems Noida', 'Plot 46, Sector 132, Noida', 'Referral', 15, 28.5021, 77.3750, 1),
-            ('2026-10-14', 'TEAM-3', 'Paytm Headquarters', 'Sector 5, Noida, Uttar Pradesh', 'Outreach', 12, 28.5821, 77.3150, 1),
-            ('2026-10-15', 'TEAM-3', 'HCL Infosystems', 'Sector 3, Noida', 'Outreach', 10, 28.5700, 77.3200, 1),
-            ('2026-10-16', 'TEAM-3', 'Birlasoft', 'Sector 63, Noida', 'Referral', 15, 28.6120, 77.3780, 1),
-            ('2026-10-17', 'TEAM-3', 'Nucleus Software', 'Sector 62, Noida', 'Outreach', 10, 28.6210, 77.3650, 1),
+            ('2026-10-12', 'TEAM-3', 'Adobe Systems Noida', 'Plot 46, Sector 132, Noida', 'Referral', 15, 28.5021, 77.3750, 1),
+            ('2026-10-13', 'TEAM-3', 'Paytm Headquarters', 'Sector 5, Noida, Uttar Pradesh', 'Outreach', 12, 28.5821, 77.3150, 1),
+            ('2026-10-13', 'TEAM-3', 'HCL Infosystems', 'Sector 3, Noida', 'Referral', 10, 28.5700, 77.3200, 1),
+            ('2026-10-14', 'TEAM-3', 'Birlasoft', 'Sector 63, Noida', 'Outreach', 15, 28.6120, 77.3780, 1),
+            ('2026-10-14', 'TEAM-3', 'Nucleus Software', 'Sector 62, Noida', 'Referral', 10, 28.6210, 77.3650, 1),
+            ('2026-10-15', 'TEAM-3', 'TCS Noida', 'Sector 62, Noida', 'Outreach', 15, 28.6200, 77.3700, 1),
+            ('2026-10-15', 'TEAM-3', 'Wipro Noida', 'Plot 7, Sector Techzone 2, Noida', 'Referral', 12, 28.4700, 77.4800, 1),
 
-            ('2026-10-12', 'TEAM-4', 'Jindal Stainless Ltd. Hisar', 'OP Jindal Marg, Hisar, Haryana 125005', 'Outreach', 10, 29.1492, 75.7217, 1),
-            ('2026-10-13', 'TEAM-4', 'Auto Pins India Hisar', 'Industrial Area, Hisar', 'Referral', 15, 29.1550, 75.7100, 1),
-            ('2026-10-14', 'TEAM-4', 'Haryana Agro Industries', 'Civil Lines, Hisar', 'Outreach', 12, 29.1600, 75.7000, 1),
-            ('2026-10-15', 'TEAM-4', 'Hisar Textile Mills', 'Delhi Road, Hisar', 'Outreach', 10, 29.1400, 75.7350, 1),
-            ('2026-10-16', 'TEAM-4', 'Pawan Steel Works', 'Industrial Estate, Hisar', 'Referral', 15, 29.1450, 75.7250, 1),
-            ('2026-10-17', 'TEAM-4', 'Agroha Agro Foods', 'Hisar-Barwala Road, Hisar', 'Outreach', 10, 29.1750, 75.7500, 1)''')
+            -- TEAM-4 (Hisar Hub)
+            ('2026-10-12', 'TEAM-4', 'Jindal Stainless Ltd. Hisar', 'OP Jindal Marg, Hisar, Haryana', 'Outreach', 10, 29.1492, 75.7217, 1),
+            ('2026-10-12', 'TEAM-4', 'Auto Pins India Hisar', 'Industrial Area, Hisar', 'Referral', 15, 29.1550, 75.7100, 1),
+            ('2026-10-13', 'TEAM-4', 'Haryana Agro Industries', 'Civil Lines, Hisar', 'Outreach', 12, 29.1600, 75.7000, 1),
+            ('2026-10-13', 'TEAM-4', 'Hisar Textile Mills', 'Delhi Road, Hisar', 'Referral', 10, 29.1400, 75.7350, 1),
+            ('2026-10-14', 'TEAM-4', 'Pawan Steel Works', 'Industrial Estate, Hisar', 'Outreach', 15, 29.1450, 75.7250, 1),
+            ('2026-10-14', 'TEAM-4', 'Agroha Agro Foods', 'Hisar-Barwala Road, Hisar', 'Referral', 10, 29.1750, 75.7500, 1),
+            ('2026-10-15', 'TEAM-4', 'Haryana Breweries', 'Barwala Road, Hisar', 'Outreach', 15, 29.1800, 75.7600, 1),
+            ('2026-10-15', 'TEAM-4', 'Hisar Cotton Mills', 'Rajgarh Road, Hisar', 'Referral', 12, 29.1500, 75.7150, 1)''')
 
-  # Automatic Dummy Student Assignments for Date 2026-10-12 so data appears instantly
+  # Automatic Dummy Student Assignments for Dates: 2026-10-12, 13, 14, 15
   c.execute('SELECT COUNT(*) FROM student_assignments')
   if c.fetchone()[0] == 0:
-    team1_visits = json.dumps([
-        {'id': 1, 'name': 'Tokai Imperial Rubber India Pvt. Ltd.', 'address': '45 Milestone, VPO Prithla, Palwal - 121102', 'source': 'Outreach', 'durationMins': 10, 'latitude': 28.2231, 'longitude': 77.3188, 'confirmed': True, 'isCompleted': False},
-        {'id': 2, 'name': 'Maruti Suzuki (Manesar plant)', 'address': 'Plot No. 1, Phase 3A, IMT Manesar, Gurgaon 122051', 'source': 'Referral', 'durationMins': 15, 'latitude': 28.3517, 'longitude': 76.9428, 'confirmed': True, 'isCompleted': False}
-    ])
-    team2_visits = json.dumps([
-        {'id': 8, 'name': 'Nagarro Gurgaon', 'address': 'Plot No. 13, Electronic City, Sector 18, Gurugram', 'source': 'Outreach', 'durationMins': 10, 'latitude': 28.4595, 'longitude': 77.0266, 'confirmed': True, 'isCompleted': False},
-        {'id': 9, 'name': 'TCS Gurgaon', 'address': 'IT Park, Sector 48, Gurgaon', 'source': 'Referral', 'durationMins': 15, 'latitude': 28.4231, 'longitude': 77.0450, 'confirmed': True, 'isCompleted': False}
-    ])
-    team3_visits = json.dumps([
-        {'id': 14, 'name': 'Samsung Electronics Noida', 'address': 'B-1, Sector 81, Phase II, Noida', 'source': 'Outreach', 'durationMins': 10, 'latitude': 28.5355, 'longitude': 77.3910, 'confirmed': True, 'isCompleted': False},
-        {'id': 15, 'name': 'Adobe Systems Noida', 'address': 'Plot 46, Sector 132, Noida', 'source': 'Referral', 'durationMins': 15, 'latitude': 28.5021, 'longitude': 77.3750, 'confirmed': True, 'isCompleted': False}
-    ])
-    team4_visits = json.dumps([
-        {'id': 20, 'name': 'Jindal Stainless Ltd. Hisar', 'address': 'OP Jindal Marg, Hisar, Haryana 125005', 'source': 'Outreach', 'durationMins': 10, 'latitude': 29.1492, 'longitude': 75.7217, 'confirmed': True, 'isCompleted': False},
-        {'id': 21, 'name': 'Auto Pins India Hisar', 'address': 'Industrial Area, Hisar', 'source': 'Referral', 'durationMins': 15, 'latitude': 29.1550, 'longitude': 75.7100, 'confirmed': True, 'isCompleted': False}
-    ])
+    dates = ['2026-10-12', '2026-10-13', '2026-10-14', '2026-10-15']
+    
+    for d in dates:
+      # Fetch companies for this date and team to build JSON assignments
+      for t_id in ['TEAM-1', 'TEAM-2', 'TEAM-3', 'TEAM-4']:
+        c.execute('SELECT id, name, address, source, duration_mins, latitude, longitude, confirmed FROM companies WHERE visit_date = ? AND team_id = ?', (d, t_id))
+        rows = c.fetchall()
+        team_visits = [{'id': r[0], 'name': r[1], 'address': r[2], 'source': r[3], 'durationMins': r[4], 'latitude': r[5], 'longitude': r[6], 'confirmed': bool(r[7]), 'isCompleted': False} for r in rows]
+        visits_str = json.dumps(team_visits)
 
-    # TEAM-1 Students
-    for s_id in ['STU-1001', 'STU-1002', 'STU-1003', 'STU-1004']:
-      c.execute('INSERT INTO student_assignments (student_id, visit_date, visits_json) VALUES (?, ?, ?)', (s_id, '2026-10-12', team1_visits))
-    # TEAM-2 Students
-    for s_id in ['STU-1005', 'STU-1006', 'STU-1007', 'STU-1008']:
-      c.execute('INSERT INTO student_assignments (student_id, visit_date, visits_json) VALUES (?, ?, ?)', (s_id, '2026-10-12', team2_visits))
-    # TEAM-3 Students
-    for s_id in ['STU-1009', 'STU-1010', 'STU-1011', 'STU-1012']:
-      c.execute('INSERT INTO student_assignments (student_id, visit_date, visits_json) VALUES (?, ?, ?)', (s_id, '2026-10-12', team3_visits))
-    # TEAM-4 Students
-    for s_id in ['STU-1013', 'STU-1014', 'STU-1015', 'STU-1016']:
-      c.execute('INSERT INTO student_assignments (student_id, visit_date, visits_json) VALUES (?, ?, ?)', (s_id, '2026-10-12', team4_visits))
+        # Assign to students based on team
+        if t_id == 'TEAM-1':
+          students = ['STU-1001', 'STU-1002', 'STU-1003', 'STU-1004']
+        elif t_id == 'TEAM-2':
+          students = ['STU-1005', 'STU-1006', 'STU-1007', 'STU-1008']
+        elif t_id == 'TEAM-3':
+          students = ['STU-1009', 'STU-1010', 'STU-1011', 'STU-1012']
+        else:
+          students = ['STU-1013', 'STU-1014', 'STU-1015', 'STU-1016']
+
+        for s_id in students:
+          c.execute('INSERT INTO student_assignments (student_id, visit_date, visits_json) VALUES (?, ?, ?)', (s_id, d, visits_str))
 
   conn.commit()
   conn.close()
